@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ Thống Ôn Luyện 1000 Từ Vựng Tiếng Anh Online</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --secondary: #64748b;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --accent: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 20px 20px 100px 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      color: white;
+      padding: 24px 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.15);
+    }
+
+    header h1 {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 18px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    /* Progress & Tracker Bar */
+    .tracker-card {
+      background: #eff6ff;
+      border: 1.5px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .tracker-info {
+      font-size: 14px;
+      color: #1e3a8a;
+    }
+    .tracker-info strong {
+      color: var(--primary);
+      font-size: 16px;
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      flex: 1;
+      min-width: 130px;
+      padding: 11px 12px;
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13.5px;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .btn:hover {
+      background-color: var(--primary-hover);
+    }
+    .btn-new-quiz {
+      background-color: #059669;
+    }
+    .btn-new-quiz:hover {
+      background-color: #047857;
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+    }
+    .btn-outline:hover {
+      background: #eff6ff;
+    }
+    .btn-speaker {
+      background: #e0e7ff;
+      color: #3730a3;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-speaker:hover {
+      background: #c7d2fe;
+    }
+
+    /* Questions */
+    .question-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+    .q-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .q-number {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 14.5px;
+    }
+    .prompt-text {
+      font-size: 15.5px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #0f172a;
+    }
+    .sub-prompt {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .passage-box {
+      background: #f1f5f9;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 14.5px;
+      line-height: 1.7;
+      margin-bottom: 16px;
+      border-left: 4px solid var(--primary);
+    }
+    .input-answer {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14.5px;
+      margin-top: 4px;
+      outline: none;
+    }
+    .input-answer:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .option-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14.5px;
+    }
+    .option-label:hover {
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+    .option-label.selected {
+      background: #dbeafe;
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .feedback {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13.5px;
+      display: none;
+    }
+    .feedback.correct {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+    }
+    .feedback.wrong {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+    }
+
+    /* Floating bottom action bar */
+    .action-bar-fixed {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 2px solid var(--border);
+      box-shadow: 0 -4px 15px rgba(0,0,0,0.06);
+      padding: 12px 20px;
+      z-index: 100;
+    }
+    .action-bar-content {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .score-badge {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .score-badge span {
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Hệ Thống Ôn Luyện 1000 Từ Vựng Tiếng Anh</h1>
+    <p>Thuật toán tự động loại trừ từ đã học để không bao giờ bị trùng lặp đề</p>
+  </header>
+
+  <!-- Tiến trình học không lặp lại -->
+  <div class="tracker-card">
+    <div class="tracker-info">
+      📚 Đã đưa vào bài tập: <strong id="usedCountText">0</strong> / <span id="totalVocabText">0</span> từ
+      &nbsp;|&nbsp; Còn lại: <strong id="remainCountText" style="color:#059669;">0</strong> từ chưa đụng tới
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-outline" style="font-size: 12.5px; padding: 6px 10px;" onclick="resetTrackingPool()">🔄 Reset học lại từ đầu</button>
+      <label class="btn btn-outline" style="font-size: 12.5px; padding: 6px 10px; cursor:pointer;">
+        📂 Nạp Excel khác
+        <input type="file" id="manualFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+      </label>
+    </div>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('part1')">Phần 1: Dịch câu (20 câu)</button>
+    <button class="tab-btn" onclick="switchTab('part2')">Phần 2: Điền vào chỗ trống (20 câu)</button>
+    <button class="tab-btn" onclick="switchTab('part3')">Phần 3: Lựa chọn từ (20 câu)</button>
+    <button class="tab-btn" onclick="switchTab('part4')">Phần 4: Đọc hiểu đoạn văn (20 câu)</button>
+  </div>
+
+  <!-- Dynamic Quiz Content -->
+  <div id="quizContainer"></div>
+</div>
+
+<!-- Thanh công cụ cố định ở đáy màn hình -->
+<div class="action-bar-fixed">
+  <div class="action-bar-content">
+    <button class="btn btn-new-quiz" onclick="generateNewQuizzes(true)">
+      🎲 Làm đề 20 câu MỚI (Không lặp từ cũ)
+    </button>
+    <div class="score-badge" id="scoreDisplay">Điểm: Đang làm bài</div>
+    <button class="btn" onclick="checkAllAnswers()">
+      ✅ Chấm điểm & Đáp án
+    </button>
+  </div>
+</div>
+
+<script>
+// Default fallback data
+const defaultData = [
+  { word: "achieve", meaning: "đạt được, hoàn thành", example: "He worked hard to achieve his business goals.", trans: "Anh ấy đã nỗ lực làm việc để đạt được mục tiêu kinh doanh của mình." },
+  { word: "supply", meaning: "cung cấp, nguồn cung", example: "The factory cannot supply enough goods on time.", trans: "Nhà máy không thể cung cấp đủ hàng hóa đúng hạn." },
+  { word: "negotiate", meaning: "đàm phán, thương lượng", example: "We need to negotiate the price with the supplier.", trans: "Chúng tôi cần đàm phán mức giá với nhà cung cấp." },
+  { word: "contract", meaning: "hợp đồng", example: "Both parties agreed to sign the contract tomorrow.", trans: "Cả hai bên đã đồng ý ký hợp đồng vào ngày mai." },
+  { word: "quality", meaning: "chất lượng", example: "Our company always focuses on product quality.", trans: "Công ty chúng tôi luôn chú trọng vào chất lượng sản phẩm." },
+  { word: "delivery", meaning: "giao hàng, sự vận chuyển", example: "The delivery was delayed due to severe weather.", trans: "Việc giao hàng bị trì hoãn do thời tiết khắc nghiệt." },
+  { word: "budget", meaning: "ngân sách", example: "We must complete this project within the budget.", trans: "Chúng ta phải hoàn thành dự án này trong phạm vi ngân sách." },
+  { word: "customer", meaning: "khách hàng", example: "Customer satisfaction is our highest priority.", trans: "Sự hài lòng của khách hàng là ưu tiên cao nhất của chúng tôi." },
+  { word: "efficient", meaning: "hiệu quả, năng suất", example: "We need to find an efficient way to manufacture goods.", trans: "Chúng ta cần tìm ra phương thức hiệu quả để sản xuất hàng hóa." },
+  { word: "confirm", meaning: "xác nhận", example: "Please confirm your flight details by email.", trans: "Vui lòng xác nhận thông tin chuyến bay của bạn qua email." },
+  { word: "requirement", meaning: "yêu cầu, điều kiện", example: "The supplier met all our quality requirements.", trans: "Nhà cung cấp đã đáp ứng tất cả yêu cầu chất lượng của chúng tôi." },
+  { word: "schedule", meaning: "lịch trình, kế hoạch", example: "The production schedule will be updated next Monday.", trans: "Lịch trình sản xuất sẽ được cập nhật vào thứ Hai tuần tới." },
+  { word: "strategy", meaning: "chiến lược", example: "They developed a new marketing strategy.", trans: "Họ đã phát triển một chiến lược tiếp thị mới." },
+  { word: "inventory", meaning: "hàng tồn kho", example: "We check the warehouse inventory every month.", trans: "Chúng tôi kiểm tra hàng tồn kho trong kho hàng mỗi tháng." },
+  { word: "payment", meaning: "thanh toán", example: "Payment must be made within 30 days of the invoice.", trans: "Việc thanh toán phải được thực hiện trong vòng 30 ngày kể từ khi có hóa đơn." },
+  { word: "partnership", meaning: "quan hệ đối tác", example: "We established a long-term partnership with them.", trans: "Chúng tôi đã thiết lập mối quan hệ đối tác lâu dài với họ." },
+  { word: "revenue", meaning: "doanh thu", example: "The annual revenue increased by 15 percent.", trans: "Doanh thu hàng năm đã tăng thêm 15 phần trăm." },
+  { word: "responsible", meaning: "chịu trách nhiệm", example: "She is responsible for handling international shipments.", trans: "Cô ấy chịu trách nhiệm xử lý các lô hàng quốc tế." },
+  { word: "deadline", meaning: "hạn chót", example: "We must submit the quotation before the deadline.", trans: "Chúng ta phải gửi bảng báo giá trước hạn chót." },
+  { word: "warranty", meaning: "bảo hành", example: "The machine comes with a two-year warranty.", trans: "Máy móc đi kèm với chế độ bảo hành hai năm." }
+];
+
+let vocabList = [...defaultData];
+let usedWordsSet = new Set(); // Bộ nhớ lưu những từ ĐÃ RA ĐỀ trong các lần làm trước
+let currentTab = 'part1';
+
+function speak(text) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+function updateTrackerUI() {
+  document.getElementById('totalVocabText').innerText = vocabList.length;
+  document.getElementById('usedCountText').innerText = usedWordsSet.size;
+  document.getElementById('remainCountText').innerText = Math.max(0, vocabList.length - usedWordsSet.size);
+}
+
+function resetTrackingPool() {
+  if (confirm("Bạn có chắc muốn đặt lại tiến trình? Tất cả 1000 từ sẽ được mở lại như một vòng học mới.")) {
+    usedWordsSet.clear();
+    generateNewQuizzes(false);
+  }
+}
+
+// Helper: Lấy N từ chưa từng xuất hiện (loại trừ usedWordsSet)
+function getUnusedItems(n) {
+  let unusedPool = vocabList.filter(item => !usedWordsSet.has(item.word.toLowerCase()));
+
+  // Nếu kho từ chưa dùng không còn đủ n từ, tự động quay vòng vòng lặp mới
+  if (unusedPool.length < n) {
+    alert(`🎉 Chúc mừng bạn! Bạn đã luyện qua gần hết kho từ vựng (${usedWordsSet.size}/${vocabList.length} từ). Hệ thống sẽ bắt đầu vòng lặp mới!`);
+    usedWordsSet.clear();
+    unusedPool = [...vocabList];
+  }
+
+  const shuffled = [...unusedPool].sort(() => 0.5 - Math.random());
+  const selected = shuffled.slice(0, Math.min(n, shuffled.length));
+
+  // Ghi nhận các từ này đã dùng
+  selected.forEach(item => usedWordsSet.add(item.word.toLowerCase()));
+  return selected;
+}
+
+let part1Data = [];
+let part2Data = [];
+let part3Data = [];
+let part4Data = [];
+
+function generateNewQuizzes(scrollUp = true) {
+  document.getElementById('scoreDisplay').innerHTML = `Điểm: Đang làm bài`;
+
+  // 1. Dịch câu: Bốc 20 từ chưa dùng
+  part1Data = getUnusedItems(20).map(item => ({
+    ...item,
+    userAnswer: '',
+    correct: null
+  }));
+
+  // 2. Điền chỗ trống: Bốc 20 từ chưa dùng
+  part2Data = getUnusedItems(20).map(item => {
+    const regex = new RegExp(`\\b${item.word}\\b`, 'gi');
+    let blankSentence = item.example.replace(regex, '______');
+    if (!blankSentence.includes('______')) {
+      const words = item.example.split(' ');
+      if (words.length > 2) {
+        words[1] = '______';
+        blankSentence = words.join(' ');
+      }
+    }
+    return {
+      ...item,
+      blankSentence,
+      userAnswer: '',
+      correct: null
+    };
+  });
+
+  // 3. Lựa chọn từ (Multiple Choice): Bốc 20 từ chưa dùng
+  part3Data = getUnusedItems(20).map(item => {
+    const regex = new RegExp(`\\b${item.word}\\b`, 'gi');
+    const maskedSentence = item.example.replace(regex, '( ... )');
+    
+    const distractors = vocabList.filter(v => v.word.toLowerCase() !== item.word.toLowerCase());
+    const randomDistractors = [...distractors].sort(() => 0.5 - Math.random()).slice(0, 3).map(v => v.word);
+    const options = [item.word, ...randomDistractors].sort(() => 0.5 - Math.random());
+
+    return {
+      ...item,
+      maskedSentence,
+      options,
+      selectedAnswer: '',
+      correct: null
+    };
+  });
+
+  // 4. Đọc hiểu đoạn văn: Bốc 20 từ chưa dùng
+  part4Data = [];
+  const readingPool = getUnusedItems(20);
+  for (let p = 0; p < 4; p++) {
+    const subset = readingPool.slice(p * 5, (p + 1) * 5);
+    const passage = `In modern business communications, teams collaborate to ${subset[0].word} efficiently and optimize operations. For instance, ${subset[1].example} Furthermore, executives observe that ${subset[2].example} In daily negotiations, ${subset[3].example} Paying special attention to every ${subset[4].word} will maximize overall business performance.`;
+    
+    const questions = subset.map(targetWord => {
+      const distractors = vocabList.filter(v => v.word.toLowerCase() !== targetWord.word.toLowerCase());
+      const randomDistractors = [...distractors].sort(() => 0.5 - Math.random()).slice(0, 3).map(v => v.meaning || v.word);
+      const correctMeaning = targetWord.meaning || targetWord.word;
+      const options = [correctMeaning, ...randomDistractors].sort(() => 0.5 - Math.random());
+
+      return {
+        targetWord: targetWord.word,
+        prompt: `Trong đoạn văn trên, từ <strong>"${targetWord.word}"</strong> có nghĩa phù hợp nhất là:`,
+        options,
+        correctMeaning,
+        selectedAnswer: '',
+        correct: null
+      };
+    });
+
+    part4Data.push({ passageId: p + 1, passage, questions });
+  }
+
+  updateTrackerUI();
+  renderTab();
+
+  if (scrollUp) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function switchTab(tabId) {
+  currentTab = tabId;
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  renderTab();
+}
+
+function renderTab() {
+  const container = document.getElementById('quizContainer');
+  let html = '';
+
+  if (currentTab === 'part1') {
+    html += `<div class="card"><h3>Phần 1: Dịch Câu Từ Tiếng Việt Sang Tiếng Anh (20 câu)</h3><p class="sub-prompt">Dịch câu tiếng Việt gợi ý sang tiếng Anh. Bấm nút loa để nghe đáp án chuẩn.</p></div>`;
+    part1Data.forEach((item, idx) => {
+      html += `
+        <div class="question-card" id="p1_card_${idx}">
+          <div class="q-header">
+            <span class="q-number">Câu ${idx + 1}/20</span>
+            <button class="btn-speaker" onclick="speak('${item.example.replace(/'/g, "\\'")}')">🔊 Nghe câu mẫu</button>
+          </div>
+          <div class="prompt-text">🇻🇳 ${item.trans}</div>
+          <div class="sub-prompt">Gợi ý từ cốt lõi: <strong>${item.word}</strong> (${item.meaning})</div>
+          <input type="text" class="input-answer" placeholder="Gõ câu tiếng Anh của bạn tại đây..." 
+                 value="${item.userAnswer}" onchange="part1Data[${idx}].userAnswer = this.value">
+          <div class="feedback" id="p1_fb_${idx}"></div>
+        </div>
+      `;
+    });
+  } else if (currentTab === 'part2') {
+    html += `<div class="card"><h3>Phần 2: Điền Vào Chỗ Trống (20 câu)</h3><p class="sub-prompt">Đọc câu tiếng Anh và gõ từ vựng cốt lõi còn thiếu vào chỗ trống.</p></div>`;
+    part2Data.forEach((item, idx) => {
+      html += `
+        <div class="question-card" id="p2_card_${idx}">
+          <div class="q-header">
+            <span class="q-number">Câu ${idx + 1}/20</span>
+            <button class="btn-speaker" onclick="speak('${item.word}')">🔊 Nghe phát âm từ</button>
+          </div>
+          <div class="prompt-text">🇬🇧 ${item.blankSentence}</div>
+          <div class="sub-prompt">Gợi ý nghĩa tiếng Việt: <strong>${item.meaning}</strong></div>
+          <input type="text" class="input-answer" placeholder="Gõ từ vựng cần điền..." 
+                 value="${item.userAnswer}" onchange="part2Data[${idx}].userAnswer = this.value">
+          <div class="feedback" id="p2_fb_${idx}"></div>
+        </div>
+      `;
+    });
+  } else if (currentTab === 'part3') {
+    html += `<div class="card"><h3>Phần 3: Lựa Chọn Từ Trong Câu Tiếng Anh (20 câu)</h3><p class="sub-prompt">Chọn từ vựng chính xác nhất trong 4 lựa chọn để hoàn chỉnh câu.</p></div>`;
+    part3Data.forEach((item, idx) => {
+      html += `
+        <div class="question-card" id="p3_card_${idx}">
+          <div class="q-header">
+            <span class="q-number">Câu ${idx + 1}/20</span>
+            <button class="btn-speaker" onclick="speak('${item.example.replace(/'/g, "\\'")}')">🔊 Nghe câu gốc</button>
+          </div>
+          <div class="prompt-text">🇬🇧 ${item.maskedSentence}</div>
+          <div class="sub-prompt">Dịch nghĩa: ${item.trans}</div>
+          <div class="options-grid">
+            ${item.options.map(opt => `
+              <label class="option-label ${item.selectedAnswer === opt ? 'selected' : ''}" onclick="selectOption(3, ${idx}, '${opt}')">
+                <input type="radio" name="p3_opt_${idx}" value="${opt}" ${item.selectedAnswer === opt ? 'checked' : ''} style="display:none">
+                <span>${opt}</span>
+              </label>
+            `).join('')}
+          </div>
+          <div class="feedback" id="p3_fb_${idx}"></div>
+        </div>
+      `;
+    });
+  } else if (currentTab === 'part4') {
+    html += `<div class="card"><h3>Phần 4: Đọc Hiểu Đoạn Văn (4 Đoạn x 5 Câu = 20 câu)</h3><p class="sub-prompt">Đọc đoạn văn tổng hợp từ các từ vựng và chọn đáp án chính xác.</p></div>`;
+    let globalQIndex = 0;
+    part4Data.forEach((group, pIdx) => {
+      html += `
+        <div class="card" style="border-left: 4px solid var(--accent); margin-bottom: 20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+            <strong style="color: var(--accent); font-size: 15px;">Đoạn văn ${group.passageId}</strong>
+            <button class="btn-speaker" onclick="speak('${group.passage.replace(/'/g, "\\'")}')">🔊 Nghe toàn bộ đoạn văn</button>
+          </div>
+          <div class="passage-box">${group.passage}</div>
+          
+          ${group.questions.map((q, qLocalIdx) => {
+            globalQIndex++;
+            return `
+              <div class="question-card" style="background:#fcfdfd; margin-top:12px;" id="p4_card_${pIdx}_${qLocalIdx}">
+                <div class="q-header">
+                  <span class="q-number">Câu ${globalQIndex}/20</span>
+                  <button class="btn-speaker" onclick="speak('${q.targetWord}')">🔊 Nghe từ "${q.targetWord}"</button>
+                </div>
+                <div class="prompt-text">${q.prompt}</div>
+                <div class="options-grid">
+                  ${q.options.map(opt => `
+                    <label class="option-label ${q.selectedAnswer === opt ? 'selected' : ''}" onclick="selectReadingOption(${pIdx}, ${qLocalIdx}, '${opt.replace(/'/g, "\\'")}')">
+                      <input type="radio" name="p4_opt_${pIdx}_${qLocalIdx}" value="${opt}" ${q.selectedAnswer === opt ? 'checked' : ''} style="display:none">
+                      <span>${opt}</span>
+                    </label>
+                  `).join('')}
+                </div>
+                <div class="feedback" id="p4_fb_${pIdx}_${qLocalIdx}"></div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    });
+  }
+
+  container.innerHTML = html;
+}
+
+function selectOption(part, qIdx, value) {
+  if (part === 3) {
+    part3Data[qIdx].selectedAnswer = value;
+    renderTab();
+  }
+}
+
+function selectReadingOption(pIdx, qIdx, value) {
+  part4Data[pIdx].questions[qIdx].selectedAnswer = value;
+  renderTab();
+}
+
+function checkAllAnswers() {
+  let totalCorrect = 0;
+  let totalQuestions = 0;
+
+  if (currentTab === 'part1') {
+    totalQuestions = part1Data.length;
+    part1Data.forEach((item, idx) => {
+      const fb = document.getElementById(`p1_fb_${idx}`);
+      if (!fb) return;
+      const cleanUser = (item.userAnswer || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const cleanTarget = (item.example || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const containsCore = cleanUser.includes(item.word.toLowerCase());
+
+      fb.style.display = 'block';
+      if (cleanUser.length > 5 && (cleanUser === cleanTarget || containsCore)) {
+        totalCorrect++;
+        fb.className = 'feedback correct';
+        fb.innerHTML = `<strong>Chính xác!</strong><br>Câu mẫu chuẩn: <i>${item.example}</i>`;
+      } else {
+        fb.className = 'feedback wrong';
+        fb.innerHTML = `<strong>Chưa chính xác:</strong><br>Câu mẫu chuẩn: <strong>${item.example}</strong>`;
+      }
+    });
+  } else if (currentTab === 'part2') {
+    totalQuestions = part2Data.length;
+    part2Data.forEach((item, idx) => {
+      const fb = document.getElementById(`p2_fb_${idx}`);
+      if (!fb) return;
+      const cleanUser = (item.userAnswer || '').trim().toLowerCase();
+      const cleanTarget = item.word.trim().toLowerCase();
+
+      fb.style.display = 'block';
+      if (cleanUser === cleanTarget) {
+        totalCorrect++;
+        fb.className = 'feedback correct';
+        fb.innerHTML = `<strong>Chính xác!</strong> Từ cần điền là: <strong>${item.word}</strong>`;
+      } else {
+        fb.className = 'feedback wrong';
+        fb.innerHTML = `<strong>Sai rồi!</strong> Từ chính xác: <strong>${item.word}</strong> (bạn đã nhập: "${item.userAnswer || '(trống)'}")`;
+      }
+    });
+  } else if (currentTab === 'part3') {
+    totalQuestions = part3Data.length;
+    part3Data.forEach((item, idx) => {
+      const fb = document.getElementById(`p3_fb_${idx}`);
+      if (!fb) return;
+      fb.style.display = 'block';
+      if (item.selectedAnswer === item.word) {
+        totalCorrect++;
+        fb.className = 'feedback correct';
+        fb.innerHTML = `<strong>Chính xác!</strong> Đáp án: <strong>${item.word}</strong>`;
+      } else {
+        fb.className = 'feedback wrong';
+        fb.innerHTML = `<strong>Sai rồi!</strong> Đáp án đúng là: <strong>${item.word}</strong>`;
+      }
+    });
+  } else if (currentTab === 'part4') {
+    part4Data.forEach((group, pIdx) => {
+      group.questions.forEach((q, qLocalIdx) => {
+        totalQuestions++;
+        const fb = document.getElementById(`p4_fb_${pIdx}_${qLocalIdx}`);
+        if (!fb) return;
+        fb.style.display = 'block';
+        if (q.selectedAnswer === q.correctMeaning) {
+          totalCorrect++;
+          fb.className = 'feedback correct';
+          fb.innerHTML = `<strong>Chính xác!</strong> "${q.targetWord}" nghĩa là: <strong>${q.correctMeaning}</strong>`;
+        } else {
+          fb.className = 'feedback wrong';
+          fb.innerHTML = `<strong>Chưa đúng!</strong> Đáp án chính xác là: <strong>${q.correctMeaning}</strong>`;
+        }
+      });
+    });
+  }
+
+  document.getElementById('scoreDisplay').innerHTML = `Điểm phần này: <span>${totalCorrect} / ${totalQuestions}</span> (${Math.round((totalCorrect/totalQuestions)*100)}%)`;
+}
+
+// Auto load Excel
+function parseWorkbook(workbook) {
+  const firstSheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[firstSheetName];
+  const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+  if (json.length < 2) return false;
+
+  const headers = json[0].map(h => (h || '').toString().toLowerCase().trim());
+  let wordIdx = headers.findIndex(h => h.includes('word') || h.includes('từ') || h.includes('vocabulary'));
+  let meanIdx = headers.findIndex(h => h.includes('meaning') || h.includes('nghĩa') || h.includes('dịch'));
+  let exIdx = headers.findIndex(h => h.includes('example') || h.includes('ví dụ') || h.includes('sentence') || h.includes('câu'));
+  let transIdx = headers.findIndex(h => h.includes('trans') || h.includes('nghĩa câu') || h.includes('dịch câu'));
+
+  if (wordIdx === -1) wordIdx = 0;
+  if (meanIdx === -1) meanIdx = 1;
+  if (exIdx === -1) exIdx = 2;
+  if (transIdx === -1) transIdx = 3;
+
+  const parsedWords = [];
+  for (let i = 1; i < json.length; i++) {
+    const row = json[i];
+    if (!row || !row[wordIdx]) continue;
+    const word = String(row[wordIdx]).trim();
+    const meaning = row[meanIdx] ? String(row[meanIdx]).trim() : '';
+    let example = row[exIdx] ? String(row[exIdx]).trim() : '';
+    let trans = row[transIdx] ? String(row[transIdx]).trim() : '';
+
+    if (!example) example = `We should focus on ${word} to achieve better results.`;
+    if (!trans) trans = `Chúng ta nên tập trung vào (${meaning || word}) để đạt kết quả tốt hơn.`;
+
+    parsedWords.push({ word, meaning, example, trans });
+  }
+
+  if (parsedWords.length > 0) {
+    vocabList = parsedWords;
+    usedWordsSet.clear();
+    generateNewQuizzes(false);
+    return true;
+  }
+  return false;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  fetch('vocab.xlsx')
+    .then(res => {
+      if (!res.ok) throw new Error("Chưa có vocab.xlsx");
+      return res.arrayBuffer();
+    })
+    .then(data => {
+      const workbook = XLSX.read(new Uint8Array(data), { type: 'array' });
+      parseWorkbook(workbook);
+    })
+    .catch(() => {
+      generateNewQuizzes(false);
+    });
+});
+
+document.getElementById('manualFileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    parseWorkbook(workbook);
+  };
+  reader.readAsArrayBuffer(file);
+});
+</script>
+</body>
+</html>
