@@ -31,7 +31,7 @@
       background-color: var(--bg);
       color: var(--text);
       line-height: 1.6;
-      padding: 20px 20px 100px 20px;
+      padding: 20px 20px 110px 20px;
     }
 
     .container {
@@ -66,6 +66,37 @@
       margin-bottom: 18px;
       border: 1px solid var(--border);
       box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    /* AI Config Bar */
+    .ai-bar {
+      background: #fdf4ff;
+      border: 1.5px solid #f0abfc;
+      border-radius: 12px;
+      padding: 12px 18px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .ai-info {
+      font-size: 13.5px;
+      color: #86198f;
+    }
+    .ai-input-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .ai-input {
+      padding: 6px 10px;
+      border: 1px solid #d946ef;
+      border-radius: 6px;
+      font-size: 12.5px;
+      width: 220px;
+      outline: none;
     }
 
     /* Progress & Tracker Bar */
@@ -247,10 +278,11 @@
 
     .feedback {
       margin-top: 10px;
-      padding: 10px 12px;
+      padding: 10px 14px;
       border-radius: 6px;
       font-size: 13.5px;
       display: none;
+      line-height: 1.6;
     }
     .feedback.correct {
       background: #dcfce7;
@@ -261,6 +293,11 @@
       background: #fee2e2;
       color: #b91c1c;
       border: 1px solid #fca5a5;
+    }
+    .feedback.loading {
+      background: #f3f4f6;
+      color: #4b5563;
+      border: 1px dashed #9ca3af;
     }
 
     /* Floating bottom action bar */
@@ -298,9 +335,21 @@
 
 <div class="container">
   <header>
-    <h1>Hệ Thống Ôn Luyện 1000 Từ Vựng Tiếng Anh</h1>
-    <p>Thuật toán tự động loại trừ từ đã học để không bao giờ bị trùng lặp đề</p>
+    <h1>Hệ Thống Ôn Luyện 1000 Từ Vựng Tiếng Anh Online</h1>
+    <p>Tích hợp Giám khảo AI (Gemini) phân tích lỗi ngữ pháp & chính tả trực tiếp</p>
   </header>
+
+  <!-- Cấu hình Gemini AI Key -->
+  <div class="ai-bar">
+    <div class="ai-info">
+      🤖 <strong>Giám khảo AI (Google Gemini):</strong>
+      <span id="aiStatusText">Chưa nạp key (Đang dùng thuật toán so sánh tự động)</span>
+    </div>
+    <div class="ai-input-group">
+      <input type="password" id="geminiApiKeyInput" class="ai-input" placeholder="Dán Gemini API Key vào đây...">
+      <button class="btn" style="padding: 6px 12px; font-size: 12.5px; background: #c026d3;" onclick="saveApiKey()">Lưu Key</button>
+    </div>
+  </div>
 
   <!-- Tiến trình học không lặp lại -->
   <div class="tracker-card">
@@ -309,7 +358,7 @@
       &nbsp;|&nbsp; Còn lại: <strong id="remainCountText" style="color:#059669;">0</strong> từ chưa đụng tới
     </div>
     <div style="display:flex; gap:8px;">
-      <button class="btn btn-outline" style="font-size: 12.5px; padding: 6px 10px;" onclick="resetTrackingPool()">🔄 Reset học lại từ đầu</button>
+      <button class="btn btn-outline" style="font-size: 12.5px; padding: 6px 10px;" onclick="resetTrackingPool()">🔄 Reset học lại</button>
       <label class="btn btn-outline" style="font-size: 12.5px; padding: 6px 10px; cursor:pointer;">
         📂 Nạp Excel khác
         <input type="file" id="manualFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
@@ -336,7 +385,7 @@
       🎲 Làm đề 20 câu MỚI (Không lặp từ cũ)
     </button>
     <div class="score-badge" id="scoreDisplay">Điểm: Đang làm bài</div>
-    <button class="btn" onclick="checkAllAnswers()">
+    <button class="btn" id="submitBtn" onclick="checkAllAnswers()">
       ✅ Chấm điểm & Đáp án
     </button>
   </div>
@@ -368,8 +417,37 @@ const defaultData = [
 ];
 
 let vocabList = [...defaultData];
-let usedWordsSet = new Set(); // Bộ nhớ lưu những từ ĐÃ RA ĐỀ trong các lần làm trước
+let usedWordsSet = new Set();
 let currentTab = 'part1';
+
+// API Key Management (Stored locally in user's browser, completely safe)
+let geminiApiKey = localStorage.getItem('GEMINI_API_KEY') || '';
+
+function updateApiKeyUI() {
+  const statusEl = document.getElementById('aiStatusText');
+  const inputEl = document.getElementById('geminiApiKeyInput');
+  if (geminiApiKey) {
+    statusEl.innerHTML = `<b style="color:#16a34a;">Đang hoạt động</b> (Sẵn sàng chấm ngữ pháp chi tiết)`;
+    inputEl.value = geminiApiKey;
+  } else {
+    statusEl.innerHTML = `Chưa nạp key (Dùng so sánh tự động thông minh)`;
+    inputEl.value = '';
+  }
+}
+
+function saveApiKey() {
+  const val = document.getElementById('geminiApiKeyInput').value.trim();
+  if (val) {
+    geminiApiKey = val;
+    localStorage.setItem('GEMINI_API_KEY', val);
+    alert('Đã lưu Gemini API Key thành công! Giám khảo AI sẽ chấm các bài dịch câu của bạn.');
+  } else {
+    geminiApiKey = '';
+    localStorage.removeItem('GEMINI_API_KEY');
+    alert('Đã xóa API Key. Ứng dụng sẽ dùng bộ chấm tự động thông minh.');
+  }
+  updateApiKeyUI();
+}
 
 function speak(text) {
   if ('speechSynthesis' in window) {
@@ -394,11 +472,8 @@ function resetTrackingPool() {
   }
 }
 
-// Helper: Lấy N từ chưa từng xuất hiện (loại trừ usedWordsSet)
 function getUnusedItems(n) {
   let unusedPool = vocabList.filter(item => !usedWordsSet.has(item.word.toLowerCase()));
-
-  // Nếu kho từ chưa dùng không còn đủ n từ, tự động quay vòng vòng lặp mới
   if (unusedPool.length < n) {
     alert(`🎉 Chúc mừng bạn! Bạn đã luyện qua gần hết kho từ vựng (${usedWordsSet.size}/${vocabList.length} từ). Hệ thống sẽ bắt đầu vòng lặp mới!`);
     usedWordsSet.clear();
@@ -407,8 +482,6 @@ function getUnusedItems(n) {
 
   const shuffled = [...unusedPool].sort(() => 0.5 - Math.random());
   const selected = shuffled.slice(0, Math.min(n, shuffled.length));
-
-  // Ghi nhận các từ này đã dùng
   selected.forEach(item => usedWordsSet.add(item.word.toLowerCase()));
   return selected;
 }
@@ -421,14 +494,15 @@ let part4Data = [];
 function generateNewQuizzes(scrollUp = true) {
   document.getElementById('scoreDisplay').innerHTML = `Điểm: Đang làm bài`;
 
-  // 1. Dịch câu: Bốc 20 từ chưa dùng
+  // 1. Dịch câu
   part1Data = getUnusedItems(20).map(item => ({
     ...item,
     userAnswer: '',
-    correct: null
+    correct: null,
+    aiFeedback: ''
   }));
 
-  // 2. Điền chỗ trống: Bốc 20 từ chưa dùng
+  // 2. Điền chỗ trống
   part2Data = getUnusedItems(20).map(item => {
     const regex = new RegExp(`\\b${item.word}\\b`, 'gi');
     let blankSentence = item.example.replace(regex, '______');
@@ -447,11 +521,10 @@ function generateNewQuizzes(scrollUp = true) {
     };
   });
 
-  // 3. Lựa chọn từ (Multiple Choice): Bốc 20 từ chưa dùng
+  // 3. Lựa chọn từ
   part3Data = getUnusedItems(20).map(item => {
     const regex = new RegExp(`\\b${item.word}\\b`, 'gi');
     const maskedSentence = item.example.replace(regex, '( ... )');
-    
     const distractors = vocabList.filter(v => v.word.toLowerCase() !== item.word.toLowerCase());
     const randomDistractors = [...distractors].sort(() => 0.5 - Math.random()).slice(0, 3).map(v => v.word);
     const options = [item.word, ...randomDistractors].sort(() => 0.5 - Math.random());
@@ -465,12 +538,12 @@ function generateNewQuizzes(scrollUp = true) {
     };
   });
 
-  // 4. Đọc hiểu đoạn văn: Bốc 20 từ chưa dùng
+  // 4. Đọc hiểu
   part4Data = [];
   const readingPool = getUnusedItems(20);
   for (let p = 0; p < 4; p++) {
     const subset = readingPool.slice(p * 5, (p + 1) * 5);
-    const passage = `In modern business communications, teams collaborate to ${subset[0].word} efficiently and optimize operations. For instance, ${subset[1].example} Furthermore, executives observe that ${subset[2].example} In daily negotiations, ${subset[3].example} Paying special attention to every ${subset[4].word} will maximize overall business performance.`;
+    const passage = `In modern business operations, teams frequently collaborate to ${subset[0].word} and optimize logistics. For instance, ${subset[1].example} In regular reviews, executives emphasize that ${subset[2].example} In daily communications, ${subset[3].example} Careful attention to every ${subset[4].word} will maximize operational efficiency.`;
     
     const questions = subset.map(targetWord => {
       const distractors = vocabList.filter(v => v.word.toLowerCase() !== targetWord.word.toLowerCase());
@@ -511,7 +584,7 @@ function renderTab() {
   let html = '';
 
   if (currentTab === 'part1') {
-    html += `<div class="card"><h3>Phần 1: Dịch Câu Từ Tiếng Việt Sang Tiếng Anh (20 câu)</h3><p class="sub-prompt">Dịch câu tiếng Việt gợi ý sang tiếng Anh. Bấm nút loa để nghe đáp án chuẩn.</p></div>`;
+    html += `<div class="card"><h3>Phần 1: Dịch Câu Từ Tiếng Việt Sang Tiếng Anh (20 câu)</h3><p class="sub-prompt">Dịch câu tiếng Việt sang tiếng Anh. Giám khảo AI sẽ phân tích lỗi chi tiết cho bạn.</p></div>`;
     part1Data.forEach((item, idx) => {
       html += `
         <div class="question-card" id="p1_card_${idx}">
@@ -620,30 +693,154 @@ function selectReadingOption(pIdx, qIdx, value) {
   renderTab();
 }
 
-function checkAllAnswers() {
+// Similarity calculation fallback
+function getSimilarity(s1, s2) {
+  s1 = s1.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  s2 = s2.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  if (s1 === s2) return 1.0;
+  if (!s1 || !s2) return 0.0;
+  const words1 = s1.split(/\s+/);
+  const words2 = s2.split(/\s+/);
+  let matches = 0;
+  words1.forEach(w => {
+    if (words2.includes(w)) matches++;
+  });
+  return (2.0 * matches) / (words1.length + words2.length);
+}
+
+// AI Grading with Gemini Flash (Batch call for all 20 questions)
+async function gradePart1WithGemini() {
+  const promptData = part1Data.map((item, idx) => ({
+    qId: idx + 1,
+    vietnamese: item.trans,
+    coreWord: item.word,
+    standardAnswer: item.example,
+    userAnswer: item.userAnswer || ''
+  }));
+
+  const systemInstruction = `Bạn là một giáo viên tiếng Anh chấm điểm bài dịch từ tiếng Việt sang tiếng Anh của học viên.
+Nhiệm vụ của bạn:
+1. Xác định câu của học viên đúng hay sai (isCorrect: true/false). Chú ý: Nếu sai ngữ pháp, sai chính tả (ví dụ "goal bussiness" thay vì "business goals"), hoặc sai trật tự từ thì coi là false. Nếu câu đúng ngữ pháp, diễn đạt tự nhiên và giữ đúng nghĩa thì coi là true (không nhất thiết phải y hệt 100% câu mẫu).
+2. Viết nhận xét (comment) ngắn gọn bằng tiếng Việt: chỉ rõ lỗi ngữ pháp/từ vựng nếu có, hoặc khen ngợi nếu viết tốt.
+Trả về định dạng JSON thuần túy (không kèm markdown):
+[
+  { "qId": 1, "isCorrect": false, "comment": "Lỗi chính tả 'bussiness' -> 'business', trật tự từ 'goal bussiness' -> 'business goals'." }
+]`;
+
+  const requestBody = {
+    contents: [{
+      parts: [{
+        text: `${systemInstruction}\n\nDữ liệu bài làm:\n${JSON.stringify(promptData)}`
+      }]
+    }]
+  };
+
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!response.ok) {
+    throw new Error('Lỗi gọi Gemini API (Mã: ' + response.status + ')');
+  }
+
+  const resJson = await response.json();
+  let rawText = resJson.candidates[0].content.parts[0].text;
+  rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+  return JSON.parse(rawText);
+}
+
+async function checkAllAnswers() {
+  const submitBtn = document.getElementById('submitBtn');
+
+  if (currentTab === 'part1') {
+    let totalCorrect = 0;
+    const totalQuestions = part1Data.length;
+
+    // Show loading state for part 1
+    part1Data.forEach((_, idx) => {
+      const fb = document.getElementById(`p1_fb_${idx}`);
+      if (fb) {
+        fb.style.display = 'block';
+        fb.className = 'feedback loading';
+        fb.innerHTML = geminiApiKey ? '🤖 Giám khảo AI đang phân tích ngữ pháp...' : '⏳ Đang chấm điểm...';
+      }
+    });
+
+    submitBtn.disabled = true;
+
+    if (geminiApiKey) {
+      try {
+        const aiResults = await gradePart1WithGemini();
+        aiResults.forEach(res => {
+          const idx = res.qId - 1;
+          const item = part1Data[idx];
+          const fb = document.getElementById(`p1_fb_${idx}`);
+          if (!fb) return;
+
+          if (res.isCorrect) {
+            totalCorrect++;
+            fb.className = 'feedback correct';
+            fb.innerHTML = `<strong>✅ Chính xác! (AI chấm)</strong><br>${res.comment}<br>Câu mẫu chuẩn: <i>${item.example}</i>`;
+          } else {
+            fb.className = 'feedback wrong';
+            fb.innerHTML = `<strong>❌ Chưa chính xác (AI chấm):</strong><br>💡 <strong>Nhận xét:</strong> ${res.comment}<br>📌 <strong>Câu chuẩn:</strong> <strong>${item.example}</strong>`;
+          }
+        });
+      } catch (err) {
+        console.warn("AI grading error, falling back to algorithm:", err);
+        alert("Không thể kết nối Gemini API (" + err.message + "). Hệ thống sẽ chuyển sang chấm bằng thuật toán đối chiếu!");
+        // Fallback to fuzzy logic
+        part1Data.forEach((item, idx) => {
+          const fb = document.getElementById(`p1_fb_${idx}`);
+          const userText = (item.userAnswer || '').trim().toLowerCase();
+          const targetText = item.example.toLowerCase();
+          const hasCoreWord = userText.includes(item.word.toLowerCase());
+          const similarity = getSimilarity(userText, targetText);
+
+          if (similarity >= 0.75 && hasCoreWord) {
+            totalCorrect++;
+            fb.className = 'feedback correct';
+            fb.innerHTML = `<strong>Chính xác!</strong> (${Math.round(similarity * 100)}% khớp)<br>Câu chuẩn: <i>${item.example}</i>`;
+          } else {
+            fb.className = 'feedback wrong';
+            fb.innerHTML = `<strong>Chưa chính xác:</strong><br>Bạn nhập: <i>"${item.userAnswer || '(trống)'}"</i><br>Câu chuẩn: <strong>${item.example}</strong>`;
+          }
+        });
+      }
+    } else {
+      // Local smart fuzzy logic
+      part1Data.forEach((item, idx) => {
+        const fb = document.getElementById(`p1_fb_${idx}`);
+        const userText = (item.userAnswer || '').trim().toLowerCase();
+        const targetText = item.example.toLowerCase();
+        const hasCoreWord = userText.includes(item.word.toLowerCase());
+        const similarity = getSimilarity(userText, targetText);
+
+        if (similarity >= 0.75 && hasCoreWord) {
+          totalCorrect++;
+          fb.className = 'feedback correct';
+          fb.innerHTML = `<strong>Chính xác!</strong> (${Math.round(similarity * 100)}% khớp)<br>Câu chuẩn: <i>${item.example}</i>`;
+        } else {
+          fb.className = 'feedback wrong';
+          fb.innerHTML = `<strong>Chưa chính xác:</strong><br>Bạn nhập: <i>"${item.userAnswer || '(trống)'}"</i><br>Câu chuẩn: <strong>${item.example}</strong>`;
+        }
+      });
+    }
+
+    submitBtn.disabled = false;
+    document.getElementById('scoreDisplay').innerHTML = `Điểm phần này: <span>${totalCorrect} / ${totalQuestions}</span> (${Math.round((totalCorrect/totalQuestions)*100)}%)`;
+    return;
+  }
+
+  // Part 2, 3, 4 Grading
   let totalCorrect = 0;
   let totalQuestions = 0;
 
-  if (currentTab === 'part1') {
-    totalQuestions = part1Data.length;
-    part1Data.forEach((item, idx) => {
-      const fb = document.getElementById(`p1_fb_${idx}`);
-      if (!fb) return;
-      const cleanUser = (item.userAnswer || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const cleanTarget = (item.example || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const containsCore = cleanUser.includes(item.word.toLowerCase());
-
-      fb.style.display = 'block';
-      if (cleanUser.length > 5 && (cleanUser === cleanTarget || containsCore)) {
-        totalCorrect++;
-        fb.className = 'feedback correct';
-        fb.innerHTML = `<strong>Chính xác!</strong><br>Câu mẫu chuẩn: <i>${item.example}</i>`;
-      } else {
-        fb.className = 'feedback wrong';
-        fb.innerHTML = `<strong>Chưa chính xác:</strong><br>Câu mẫu chuẩn: <strong>${item.example}</strong>`;
-      }
-    });
-  } else if (currentTab === 'part2') {
+  if (currentTab === 'part2') {
     totalQuestions = part2Data.length;
     part2Data.forEach((item, idx) => {
       const fb = document.getElementById(`p2_fb_${idx}`);
@@ -741,6 +938,7 @@ function parseWorkbook(workbook) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  updateApiKeyUI();
   fetch('vocab.xlsx')
     .then(res => {
       if (!res.ok) throw new Error("Chưa có vocab.xlsx");
