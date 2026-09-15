@@ -18,7 +18,8 @@
       --text: #1e293b;
       --text-muted: #64748b;
       --border: #e2e8f0;
-      --accent: #8b5cf6;
+      --accent: #7c3aed;
+      --accent-light: #ede9fe;
     }
 
     * {
@@ -179,6 +180,14 @@
     .btn-speaker:hover {
       background: #c7d2fe;
     }
+    .btn-speaker-accent {
+      background: var(--accent-light);
+      color: var(--accent);
+      border: 1px solid #ddd6fe;
+    }
+    .btn-speaker-accent:hover {
+      background: #ddd6fe;
+    }
 
     /* Question Item */
     .question-card {
@@ -212,15 +221,52 @@
       color: var(--text-muted);
       margin-bottom: 10px;
     }
-    .passage-box {
-      background: #f1f5f9;
-      padding: 15px;
-      border-radius: 8px;
-      font-size: 14.5px;
-      line-height: 1.7;
-      margin-bottom: 16px;
-      border-left: 4px solid var(--primary);
+    .audio-passage-card {
+      background: #faf5ff;
+      border: 1.5px solid #e9d5ff;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 20px;
+      border-left: 5px solid var(--accent);
     }
+    .audio-bar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .audio-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .passage-script {
+      background: #ffffff;
+      border: 1px dashed #d8b4fe;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 14.5px;
+      line-height: 1.8;
+      color: #334155;
+      margin-top: 12px;
+      display: none;
+    }
+    .btn-toggle-script {
+      background: transparent;
+      color: var(--accent);
+      border: none;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 4px 0;
+    }
+
     .input-answer {
       width: 100%;
       padding: 10px 14px;
@@ -242,7 +288,7 @@
     }
     .options-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      grid-template-columns: 1fr;
       gap: 10px;
       margin-top: 8px;
       margin-bottom: 8px;
@@ -250,8 +296,8 @@
     .option-label {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 9px 12px;
+      gap: 12px;
+      padding: 10px 14px;
       background: #f8fafc;
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -264,9 +310,10 @@
       border-color: #93c5fd;
     }
     .option-label.selected {
-      background: #dbeafe;
-      border-color: var(--primary);
+      background: #ede9fe;
+      border-color: var(--accent);
       font-weight: 600;
+      color: #4c1d95;
     }
 
     /* Feedback */
@@ -330,7 +377,7 @@
 <div class="container">
   <header>
     <h1>Hệ Thống Ôn Luyện 1000 Từ Vựng Tiếng Anh Cốt Lõi</h1>
-    <p>Chấm Điểm Từng Câu • Phát Âm Tốc Độ Chuẩn 0.8x • Tự Động Xoay Vòng Đề Mới</p>
+    <p>Phần 4: Nghe Phản Xạ 100% Tiếng Anh • Tốc Độ Đọc 0.8x • Chấm Điểm Từng Câu</p>
   </header>
 
   <!-- Thanh tiến trình -->
@@ -352,10 +399,10 @@
 
   <!-- Tabs Navigation -->
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('part1')">Phần 1: Dịch câu (20 câu)</button>
+    <button class="tab-btn" onclick="switchTab('part1')">Phần 1: Dịch câu (20 câu)</button>
     <button class="tab-btn" onclick="switchTab('part2')">Phần 2: Điền vào chỗ trống (20 câu)</button>
     <button class="tab-btn" onclick="switchTab('part3')">Phần 3: Lựa chọn từ (20 câu)</button>
-    <button class="tab-btn" onclick="switchTab('part4')">Phần 4: Đọc hiểu đoạn văn (20 câu)</button>
+    <button class="tab-btn active" onclick="switchTab('part4')">Phần 4: Nghe Phản Xạ Đoạn Văn (20 câu)</button>
   </div>
 
   <!-- Dynamic Quiz Content -->
@@ -412,9 +459,8 @@ const defaultData = [
 
 let vocabList = [...defaultData];
 let usedWordsSet = new Set();
-let currentTab = 'part1';
+let currentTab = 'part4'; // Mặc định mở phần nghe phản xạ
 
-// Tốc độ phát âm được giảm xuống 0.8
 function speak(text) {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
@@ -422,6 +468,18 @@ function speak(text) {
     utterance.lang = 'en-US';
     utterance.rate = 0.8;
     window.speechSynthesis.speak(utterance);
+  }
+}
+
+function toggleScript(id) {
+  const el = document.getElementById(id);
+  const btn = document.getElementById('btn_' + id);
+  if (el.style.display === 'block') {
+    el.style.display = 'none';
+    btn.innerText = '👁️ View Audio Transcript (Xem bài đọc)';
+  } else {
+    el.style.display = 'block';
+    btn.innerText = '🙈 Hide Audio Transcript (Ẩn bài đọc)';
   }
 }
 
@@ -500,30 +558,77 @@ function generateNewQuizzes(scrollUp = true) {
     };
   });
 
-  // 4. Đọc hiểu
+  // 4. NGHE PHẢN XẠ ĐOẠN VĂN (Listening Reflex - 100% English)
+  // 4 audio passages x 5 questions = 20 questions
   part4Data = [];
-  const readingPool = getUnusedItems(20);
+  const listeningPool = getUnusedItems(20);
   for (let p = 0; p < 4; p++) {
-    const subset = readingPool.slice(p * 5, (p + 1) * 5);
-    const passage = `In modern business operations, teams collaborate closely to ${subset[0].word} and ensure steady production. For example, ${subset[1].example} Furthermore, management confirms that ${subset[2].example} In daily negotiations, ${subset[3].example} Careful monitoring of every ${subset[4].word} will maximize overall company performance.`;
+    const subset = listeningPool.slice(p * 5, (p + 1) * 5);
+    const passageTitle = `Workplace Scenario ${p + 1}: Professional Operations & Strategy`;
     
-    const questions = subset.map(targetWord => {
-      const distractors = vocabList.filter(v => v.word.toLowerCase() !== targetWord.word.toLowerCase());
-      const randomDistractors = [...distractors].sort(() => 0.5 - Math.random()).slice(0, 3).map(v => v.meaning || v.word);
-      const correctMeaning = targetWord.meaning || targetWord.word;
-      const options = [correctMeaning, ...randomDistractors].sort(() => 0.5 - Math.random());
+    // Đoạn văn tiếng Anh tự nhiên mạch lạc kết nối 5 từ vựng cốt lõi
+    const passage = `Attention all team members. To ${subset[0].word} our strategic targets this quarter, our department has decided to implement immediate improvements across all divisions. First of all, please keep in mind that ${subset[1].example} Furthermore, when discussing terms with international suppliers, remember that ${subset[2].example} In addition, our supervisors emphasized that ${subset[3].example} Finally, managing every ${subset[4].word} with precision will ensure our sustained competitive advantage and operational excellence.`;
+
+    const questions = subset.map((item, qIdx) => {
+      // Các dạng câu hỏi nghe hiểu phản xạ thực tế (Listening comprehension questions)
+      const questionTypes = [
+        {
+          questionText: `According to the speaker, what is the primary prerequisite to succeed?`,
+          correctOption: `The team must focus on how to ${item.word} effectively.`,
+          distractor1: `The department should cancel all supplier negotiations immediately.`,
+          distractor2: `Employees must reduce direct communication with managers.`,
+          distractor3: `The company should avoid making any structural improvements.`
+        },
+        {
+          questionText: `What specific instruction did the speaker give regarding ongoing operations?`,
+          correctOption: item.example,
+          distractor1: `Delivery dates should be postponed indefinitely without notification.`,
+          distractor2: `Quality control procedures should be bypassed to reduce manufacturing costs.`,
+          distractor3: `All operations will be handed over to temporary contractors tomorrow.`
+        },
+        {
+          questionText: `Based on the audio, which core element was highlighted as essential?`,
+          correctOption: `Paying strict attention to each ${item.word} throughout the process.`,
+          distractor1: `Ignoring client feedback during seasonal product launches.`,
+          distractor2: `Increasing the overall budget without proper approval.`,
+          distractor3: `Delaying team meetings until the end of the year.`
+        },
+        {
+          questionText: `In the context of the audio passage, what does the keyword "${item.word}" refer to?`,
+          correctOption: `An essential operational action or objective: "${item.example}".`,
+          distractor1: `An unimportant routine that does not affect results.`,
+          distractor2: `An obsolete procedure that will be completely discontinued.`,
+          distractor3: `A minor factor that the management does not prioritize.`
+        },
+        {
+          questionText: `What is the ultimate recommendation delivered by the speaker?`,
+          correctOption: `To ${item.word} systematically to ensure long-term excellence.`,
+          distractor1: `To stop tracking business inventory on a monthly basis.`,
+          distractor2: `To renegotiate payment conditions with zero warranty coverage.`,
+          distractor3: `To decrease collaboration between engineers and supervisors.`
+        }
+      ];
+
+      const template = questionTypes[qIdx % questionTypes.length];
+      const allOptions = [
+        template.correctOption,
+        template.distractor1,
+        template.distractor2,
+        template.distractor3
+      ].sort(() => 0.5 - Math.random());
 
       return {
-        targetWord: targetWord.word,
-        prompt: `Trong đoạn văn trên, từ <strong>"${targetWord.word}"</strong> có nghĩa phù hợp nhất là:`,
-        options,
-        correctMeaning,
+        targetWord: item.word,
+        meaning: item.meaning,
+        questionText: template.questionText,
+        options: allOptions,
+        correctOption: template.correctOption,
         selectedAnswer: '',
         checked: false
       };
     });
 
-    part4Data.push({ passageId: p + 1, passage, questions });
+    part4Data.push({ passageId: p + 1, passageTitle, passage, questions });
   }
 
   updateTrackerUI();
@@ -546,17 +651,17 @@ function renderTab() {
   let html = '';
 
   if (currentTab === 'part1') {
-    html += `<div class="card"><h3>Phần 1: Dịch Câu Từ Tiếng Việt Sang Tiếng Anh (20 câu)</h3><p class="sub-prompt">Dịch câu tiếng Việt gợi ý sang tiếng Anh. Bạn có thể nhấn <strong>"Kiểm tra câu này"</strong> để xem chấm điểm ngay lập tức.</p></div>`;
+    html += `<div class="card"><h3>Phần 1: Dịch Câu Từ Tiếng Việt Sang Tiếng Anh (20 câu)</h3><p class="sub-prompt">Dịch câu tiếng Việt gợi ý sang tiếng Anh. Nhấn <strong>"Kiểm tra câu này"</strong> để chấm ngay.</p></div>`;
     part1Data.forEach((item, idx) => {
       html += `
         <div class="question-card" id="p1_card_${idx}">
           <div class="q-header">
             <span class="q-number">Câu ${idx + 1}/20</span>
-            <button class="btn-speaker" onclick="speak('${item.example.replace(/'/g, "\\'")}')">🔊 Nghe câu chuẩn (0.8x)</button>
+            <button class="btn-speaker" onclick="speak('${item.example.replace(/'/g, "\\'")}')">🔊 Listen (0.8x)</button>
           </div>
           <div class="prompt-text">🇻🇳 ${item.trans}</div>
           <div class="sub-prompt">Gợi ý từ cốt lõi: <strong>${item.word}</strong> (${item.meaning})</div>
-          <input type="text" class="input-answer" placeholder="Gõ câu dịch tiếng Anh của bạn tại đây..." 
+          <input type="text" class="input-answer" placeholder="Type your English translation here..." 
                  value="${item.userAnswer}" onchange="part1Data[${idx}].userAnswer = this.value">
           <div class="q-action-row">
             <button class="btn btn-check-item" onclick="checkSingleQuestion(1, ${idx})">🔍 Kiểm tra câu này</button>
@@ -572,11 +677,11 @@ function renderTab() {
         <div class="question-card" id="p2_card_${idx}">
           <div class="q-header">
             <span class="q-number">Câu ${idx + 1}/20</span>
-            <button class="btn-speaker" onclick="speak('${item.word}')">🔊 Nghe phát âm (0.8x)</button>
+            <button class="btn-speaker" onclick="speak('${item.word}')">🔊 Listen Keyword (0.8x)</button>
           </div>
           <div class="prompt-text">🇬🇧 ${item.blankSentence}</div>
-          <div class="sub-prompt">Nghĩa tiếng Việt gợi ý: <strong>${item.meaning}</strong></div>
-          <input type="text" class="input-answer" placeholder="Gõ từ vựng cần điền..." 
+          <div class="sub-prompt">Nghĩa gợi ý: <strong>${item.meaning}</strong></div>
+          <input type="text" class="input-answer" placeholder="Type missing core word..." 
                  value="${item.userAnswer}" onchange="part2Data[${idx}].userAnswer = this.value">
           <div class="q-action-row">
             <button class="btn btn-check-item" onclick="checkSingleQuestion(2, ${idx})">🔍 Kiểm tra câu này</button>
@@ -592,7 +697,7 @@ function renderTab() {
         <div class="question-card" id="p3_card_${idx}">
           <div class="q-header">
             <span class="q-number">Câu ${idx + 1}/20</span>
-            <button class="btn-speaker" onclick="speak('${item.example.replace(/'/g, "\\'")}')">🔊 Nghe câu gốc (0.8x)</button>
+            <button class="btn-speaker" onclick="speak('${item.example.replace(/'/g, "\\'")}')">🔊 Listen (0.8x)</button>
           </div>
           <div class="prompt-text">🇬🇧 ${item.maskedSentence}</div>
           <div class="sub-prompt">Dịch nghĩa: ${item.trans}</div>
@@ -612,41 +717,65 @@ function renderTab() {
       `;
     });
   } else if (currentTab === 'part4') {
-    html += `<div class="card"><h3>Phần 4: Đọc Hiểu Đoạn Văn (4 Đoạn x 5 Câu = 20 câu)</h3><p class="sub-prompt">Đọc đoạn văn tổng hợp từ các từ vựng và chọn đáp án chính xác.</p></div>`;
+    html += `
+      <div class="card" style="border-left: 5px solid var(--accent);">
+        <h3 style="color: var(--accent); margin-bottom: 4px;">Phần 4: Listening Reflex & Audio Comprehension (Nghe Phản Xạ 100% Tiếng Anh)</h3>
+        <p class="sub-prompt">Quy trình rèn luyện phản xạ: <strong>1. Bấm nút 🔊 Play Audio để nghe</strong> $\rightarrow$ <strong>2. Nghe câu hỏi & chọn đáp án tiếng Anh</strong> $\rightarrow$ <strong>3. Bấm "Check Answer"</strong> (có thể bấm "View Audio Transcript" để dò lại nếu chưa nghe kịp).</p>
+      </div>
+    `;
     let globalQIndex = 0;
     part4Data.forEach((group, pIdx) => {
+      const scriptId = `script_p4_${pIdx}`;
       html += `
-        <div class="card" style="border-left: 4px solid var(--accent); margin-bottom: 20px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-            <strong style="color: var(--accent); font-size: 15px;">Đoạn văn ${group.passageId}</strong>
-            <button class="btn-speaker" onclick="speak('${group.passage.replace(/'/g, "\\'")}')">🔊 Nghe đoạn văn (0.8x)</button>
+        <div class="audio-passage-card">
+          <div class="audio-bar-row">
+            <div class="audio-title">🎧 ${group.passageTitle}</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button class="btn btn-speaker btn-speaker-accent" onclick="speak('${group.passage.replace(/'/g, "\\'")}')">
+                🔊 Play Audio Passage (0.8x)
+              </button>
+            </div>
           </div>
-          <div class="passage-box">${group.passage}</div>
           
-          ${group.questions.map((q, qLocalIdx) => {
-            globalQIndex++;
-            return `
-              <div class="question-card" style="background:#fcfdfd; margin-top:12px;" id="p4_card_${pIdx}_${qLocalIdx}">
-                <div class="q-header">
-                  <span class="q-number">Câu ${globalQIndex}/20</span>
-                  <button class="btn-speaker" onclick="speak('${q.targetWord}')">🔊 Nghe từ "${q.targetWord}" (0.8x)</button>
+          <button class="btn-toggle-script" id="btn_${scriptId}" onclick="toggleScript('${scriptId}')">
+            👁️ View Audio Transcript (Xem bài đọc)
+          </button>
+          <div class="passage-script" id="${scriptId}">
+            <strong>Audio Transcript:</strong><br>${group.passage}
+          </div>
+
+          <div style="margin-top: 16px;">
+            ${group.questions.map((q, qLocalIdx) => {
+              globalQIndex++;
+              return `
+                <div class="question-card" style="background:#ffffff; margin-top:14px; border: 1.5px solid #e2e8f0;" id="p4_card_${pIdx}_${qLocalIdx}">
+                  <div class="q-header">
+                    <span class="q-number" style="color:var(--accent);">Question ${globalQIndex}/20</span>
+                    <button class="btn-speaker" onclick="speak('${q.questionText.replace(/'/g, "\\'")}')">
+                      🔊 Listen Question
+                    </button>
+                  </div>
+                  <div class="prompt-text" style="font-size:15px; color:#1e1b4b;">${q.questionText}</div>
+                  
+                  <div class="options-grid">
+                    ${q.options.map(opt => `
+                      <label class="option-label ${q.selectedAnswer === opt ? 'selected' : ''}" onclick="selectReadingOption(${pIdx}, ${qLocalIdx}, '${opt.replace(/'/g, "\\'")}')">
+                        <input type="radio" name="p4_opt_${pIdx}_${qLocalIdx}" value="${opt}" ${q.selectedAnswer === opt ? 'checked' : ''} style="display:none">
+                        <span>${opt}</span>
+                      </label>
+                    `).join('')}
+                  </div>
+                  
+                  <div class="q-action-row">
+                    <button class="btn btn-check-item" style="background-color: var(--accent);" onclick="checkSingleReadingQuestion(${pIdx}, ${qLocalIdx})">
+                      🔍 Check Answer (Kiểm tra câu này)
+                    </button>
+                  </div>
+                  <div class="feedback" id="p4_fb_${pIdx}_${qLocalIdx}"></div>
                 </div>
-                <div class="prompt-text">${q.prompt}</div>
-                <div class="options-grid">
-                  ${q.options.map(opt => `
-                    <label class="option-label ${q.selectedAnswer === opt ? 'selected' : ''}" onclick="selectReadingOption(${pIdx}, ${qLocalIdx}, '${opt.replace(/'/g, "\\'")}')">
-                      <input type="radio" name="p4_opt_${pIdx}_${qLocalIdx}" value="${opt}" ${q.selectedAnswer === opt ? 'checked' : ''} style="display:none">
-                      <span>${opt}</span>
-                    </label>
-                  `).join('')}
-                </div>
-                <div class="q-action-row">
-                  <button class="btn btn-check-item" onclick="checkSingleReadingQuestion(${pIdx}, ${qLocalIdx})">🔍 Kiểm tra câu này</button>
-                </div>
-                <div class="feedback" id="p4_fb_${pIdx}_${qLocalIdx}"></div>
-              </div>
-            `;
-          }).join('')}
+              `;
+            }).join('')}
+          </div>
         </div>
       `;
     });
@@ -731,10 +860,10 @@ function checkSingleQuestion(part, idx) {
     fb.style.display = 'block';
     if (result.isCorrect) {
       fb.className = 'feedback correct';
-      fb.innerHTML = `<strong>✅ Chính xác!</strong><br>${result.comment}<br>📌 Câu mẫu: <i>${item.example}</i>`;
+      fb.innerHTML = `<strong>✅ Correct! (Chính xác)</strong><br>${result.comment}<br>📌 Standard Sentence: <i>${item.example}</i>`;
     } else {
       fb.className = 'feedback wrong';
-      fb.innerHTML = `<strong>❌ Chưa chính xác:</strong><br>💡 <strong>Góp ý:</strong> ${result.comment}<br>📌 <strong>Câu chuẩn xác:</strong> <strong>${item.example}</strong>`;
+      fb.innerHTML = `<strong>❌ Incorrect (Chưa chính xác):</strong><br>💡 <strong>Góp ý:</strong> ${result.comment}<br>📌 <strong>Standard Sentence:</strong> <strong>${item.example}</strong>`;
     }
   } else if (part === 2) {
     const item = part2Data[idx];
@@ -748,10 +877,10 @@ function checkSingleQuestion(part, idx) {
     fb.style.display = 'block';
     if (cleanUser === cleanTarget) {
       fb.className = 'feedback correct';
-      fb.innerHTML = `<strong>✅ Chính xác!</strong> Từ cần điền là: <strong>${item.word}</strong>`;
+      fb.innerHTML = `<strong>✅ Correct!</strong> Missing word: <strong>${item.word}</strong>`;
     } else {
       fb.className = 'feedback wrong';
-      fb.innerHTML = `<strong>❌ Sai rồi!</strong> Từ chính xác: <strong>${item.word}</strong> (bạn đã nhập: "${item.userAnswer || '(trống)'}")`;
+      fb.innerHTML = `<strong>❌ Incorrect!</strong> Correct word is: <strong>${item.word}</strong> (You typed: "${item.userAnswer || '(empty)'}")`;
     }
   } else if (part === 3) {
     const item = part3Data[idx];
@@ -760,21 +889,21 @@ function checkSingleQuestion(part, idx) {
     if (!item.selectedAnswer) {
       fb.style.display = 'block';
       fb.className = 'feedback wrong';
-      fb.innerHTML = `⚠️ Vui lòng chọn một đáp án trước khi kiểm tra!`;
+      fb.innerHTML = `⚠️ Please select an answer before checking!`;
       return;
     }
     fb.style.display = 'block';
     if (item.selectedAnswer === item.word) {
       fb.className = 'feedback correct';
-      fb.innerHTML = `<strong>✅ Chính xác!</strong> Đáp án: <strong>${item.word}</strong>`;
+      fb.innerHTML = `<strong>✅ Correct!</strong> Answer: <strong>${item.word}</strong>`;
     } else {
       fb.className = 'feedback wrong';
-      fb.innerHTML = `<strong>❌ Sai rồi!</strong> Đáp án đúng là: <strong>${item.word}</strong>`;
+      fb.innerHTML = `<strong>❌ Incorrect!</strong> Correct answer is: <strong>${item.word}</strong>`;
     }
   }
 }
 
-// CHẤM TỪNG CÂU CHO PHẦN 4 ĐỌC HIỂU
+// CHẤM TỪNG CÂU CHO PHẦN 4 NGHE PHẢN XẠ (100% English)
 function checkSingleReadingQuestion(pIdx, qIdx) {
   const q = part4Data[pIdx].questions[qIdx];
   const fb = document.getElementById(`p4_fb_${pIdx}_${qIdx}`);
@@ -782,16 +911,16 @@ function checkSingleReadingQuestion(pIdx, qIdx) {
   if (!q.selectedAnswer) {
     fb.style.display = 'block';
     fb.className = 'feedback wrong';
-    fb.innerHTML = `⚠️ Vui lòng chọn một đáp án trước khi kiểm tra!`;
+    fb.innerHTML = `⚠️ Please choose an answer first!`;
     return;
   }
   fb.style.display = 'block';
-  if (q.selectedAnswer === q.correctMeaning) {
+  if (q.selectedAnswer === q.correctOption) {
     fb.className = 'feedback correct';
-    fb.innerHTML = `<strong>✅ Chính xác!</strong> "${q.targetWord}" nghĩa là: <strong>${q.correctMeaning}</strong>`;
+    fb.innerHTML = `<strong>✅ Excellent! Correct answer.</strong><br>Key Focus: <strong>${q.targetWord}</strong> (${q.meaning})`;
   } else {
     fb.className = 'feedback wrong';
-    fb.innerHTML = `<strong>❌ Chưa đúng!</strong> Đáp án chính xác là: <strong>${q.correctMeaning}</strong>`;
+    fb.innerHTML = `<strong>❌ Incorrect answer.</strong><br>📌 <strong>Correct Choice:</strong> ${q.correctOption}<br>Key Focus: <strong>${q.targetWord}</strong> (${q.meaning})`;
   }
 }
 
@@ -815,10 +944,10 @@ function checkAllAnswers() {
       if (result.isCorrect) {
         totalCorrect++;
         fb.className = 'feedback correct';
-        fb.innerHTML = `<strong>✅ Chính xác!</strong><br>${result.comment}<br>📌 Câu mẫu: <i>${item.example}</i>`;
+        fb.innerHTML = `<strong>✅ Correct!</strong><br>${result.comment}<br>📌 Standard Sentence: <i>${item.example}</i>`;
       } else {
         fb.className = 'feedback wrong';
-        fb.innerHTML = `<strong>❌ Chưa chính xác:</strong><br>💡 <strong>Góp ý:</strong> ${result.comment}<br>📌 <strong>Câu chuẩn xác:</strong> <strong>${item.example}</strong>`;
+        fb.innerHTML = `<strong>❌ Incorrect:</strong><br>💡 <strong>Góp ý:</strong> ${result.comment}<br>📌 <strong>Standard Sentence:</strong> <strong>${item.example}</strong>`;
       }
     });
   } else if (currentTab === 'part2') {
@@ -836,10 +965,10 @@ function checkAllAnswers() {
       if (cleanUser === cleanTarget) {
         totalCorrect++;
         fb.className = 'feedback correct';
-        fb.innerHTML = `<strong>Chính xác!</strong> Từ cần điền là: <strong>${item.word}</strong>`;
+        fb.innerHTML = `<strong>✅ Correct!</strong> Missing word: <strong>${item.word}</strong>`;
       } else {
         fb.className = 'feedback wrong';
-        fb.innerHTML = `<strong>Sai rồi!</strong> Từ chính xác: <strong>${item.word}</strong> (bạn đã nhập: "${item.userAnswer || '(trống)'}")`;
+        fb.innerHTML = `<strong>❌ Incorrect!</strong> Correct word: <strong>${item.word}</strong>`;
       }
     });
   } else if (currentTab === 'part3') {
@@ -851,10 +980,10 @@ function checkAllAnswers() {
       if (item.selectedAnswer === item.word) {
         totalCorrect++;
         fb.className = 'feedback correct';
-        fb.innerHTML = `<strong>Chính xác!</strong> Đáp án: <strong>${item.word}</strong>`;
+        fb.innerHTML = `<strong>✅ Correct!</strong> Answer: <strong>${item.word}</strong>`;
       } else {
         fb.className = 'feedback wrong';
-        fb.innerHTML = `<strong>Sai rồi!</strong> Đáp án đúng là: <strong>${item.word}</strong>`;
+        fb.innerHTML = `<strong>❌ Incorrect!</strong> Correct: <strong>${item.word}</strong>`;
       }
     });
   } else if (currentTab === 'part4') {
@@ -864,19 +993,19 @@ function checkAllAnswers() {
         const fb = document.getElementById(`p4_fb_${pIdx}_${qLocalIdx}`);
         if (!fb) return;
         fb.style.display = 'block';
-        if (q.selectedAnswer === q.correctMeaning) {
+        if (q.selectedAnswer === q.correctOption) {
           totalCorrect++;
           fb.className = 'feedback correct';
-          fb.innerHTML = `<strong>Chính xác!</strong> "${q.targetWord}" nghĩa là: <strong>${q.correctMeaning}</strong>`;
+          fb.innerHTML = `<strong>✅ Correct!</strong> Key Focus: <strong>${q.targetWord}</strong> (${q.meaning})`;
         } else {
           fb.className = 'feedback wrong';
-          fb.innerHTML = `<strong>Chưa đúng!</strong> Đáp án chính xác là: <strong>${q.correctMeaning}</strong>`;
+          fb.innerHTML = `<strong>❌ Incorrect.</strong> Correct Choice: ${q.correctOption}`;
         }
       });
     });
   }
 
-  document.getElementById('scoreDisplay').innerHTML = `Điểm phần này: <span>${totalCorrect} / ${totalQuestions}</span> (${Math.round((totalCorrect/totalQuestions)*100)}%)`;
+  document.getElementById('scoreDisplay').innerHTML = `Score: <span>${totalCorrect} / ${totalQuestions}</span> (${Math.round((totalCorrect/totalQuestions)*100)}%)`;
 }
 
 // Nạp file Excel
