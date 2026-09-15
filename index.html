@@ -126,9 +126,9 @@
       background-color: var(--primary);
       color: white;
       border: none;
-      padding: 9px 16px;
+      padding: 8px 14px;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.2s;
@@ -147,6 +147,14 @@
     }
     .btn-reset-all:hover {
       background-color: var(--danger-hover);
+    }
+    .btn-check-item {
+      background-color: #4338ca;
+      font-size: 12.5px;
+      padding: 6px 12px;
+    }
+    .btn-check-item:hover {
+      background-color: #3730a3;
     }
     .btn-outline {
       background: transparent;
@@ -185,6 +193,8 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
     }
     .q-number {
       font-weight: 700;
@@ -218,17 +228,24 @@
       border-radius: 8px;
       font-size: 14.5px;
       margin-top: 4px;
+      margin-bottom: 8px;
       outline: none;
     }
     .input-answer:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
+    .q-action-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
     .options-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 10px;
       margin-top: 8px;
+      margin-bottom: 8px;
     }
     .option-label {
       display: flex;
@@ -264,12 +281,12 @@
     .feedback.correct {
       background: #dcfce7;
       color: #15803d;
-      border: 1px solid #86efac;
+      border: 1.5px solid #86efac;
     }
     .feedback.wrong {
       background: #fef2f2;
       color: #991b1b;
-      border: 1px solid #fecaca;
+      border: 1.5px solid #fecaca;
     }
 
     /* Fixed bottom bar */
@@ -313,7 +330,7 @@
 <div class="container">
   <header>
     <h1>Hệ Thống Ôn Luyện 1000 Từ Vựng Tiếng Anh Cốt Lõi</h1>
-    <p>Chấm Điểm Ngữ Pháp Thông Minh • Phát Âm Bản Xứ • Tự Động Xoay Vòng Đề Mới</p>
+    <p>Chấm Điểm Từng Câu • Phát Âm Tốc Độ Chuẩn 0.8x • Tự Động Xoay Vòng Đề Mới</p>
   </header>
 
   <!-- Thanh tiến trình -->
@@ -358,7 +375,7 @@
     </div>
     <div class="score-badge" id="scoreDisplay">Điểm: Đang làm bài</div>
     <button class="btn" onclick="checkAllAnswers()">
-      ✅ Chấm điểm & Xem đáp án
+      ✅ Chấm điểm tất cả & Xem tổng kết
     </button>
   </div>
 </div>
@@ -397,12 +414,13 @@ let vocabList = [...defaultData];
 let usedWordsSet = new Set();
 let currentTab = 'part1';
 
+// Tốc độ phát âm được giảm xuống 0.8
 function speak(text) {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
-    utterance.rate = 0.9;
+    utterance.rate = 0.8;
     window.speechSynthesis.speak(utterance);
   }
 }
@@ -413,17 +431,13 @@ function updateTrackerUI() {
   document.getElementById('remainCountText').innerText = Math.max(0, vocabList.length - usedWordsSet.size);
 }
 
-// HÀM RESET TOÀN BỘ HỆ THỐNG
 function resetAll() {
   usedWordsSet.clear();
   generateNewQuizzes(true);
 }
 
-// Bốc N từ chưa dùng (hoàn toàn không popup)
 function getUnusedItems(n) {
   let unusedPool = vocabList.filter(item => !usedWordsSet.has(item.word.toLowerCase()));
-
-  // Nếu không đủ từ chưa dùng, tự động reset xoay vòng âm thầm
   if (unusedPool.length < n) {
     usedWordsSet.clear();
     unusedPool = [...vocabList];
@@ -447,7 +461,7 @@ function generateNewQuizzes(scrollUp = true) {
   part1Data = getUnusedItems(20).map(item => ({
     ...item,
     userAnswer: '',
-    correct: null
+    checked: false
   }));
 
   // 2. Điền chỗ trống
@@ -465,7 +479,7 @@ function generateNewQuizzes(scrollUp = true) {
       ...item,
       blankSentence,
       userAnswer: '',
-      correct: null
+      checked: false
     };
   });
 
@@ -482,7 +496,7 @@ function generateNewQuizzes(scrollUp = true) {
       maskedSentence,
       options,
       selectedAnswer: '',
-      correct: null
+      checked: false
     };
   });
 
@@ -505,7 +519,7 @@ function generateNewQuizzes(scrollUp = true) {
         options,
         correctMeaning,
         selectedAnswer: '',
-        correct: null
+        checked: false
       };
     });
 
@@ -532,18 +546,21 @@ function renderTab() {
   let html = '';
 
   if (currentTab === 'part1') {
-    html += `<div class="card"><h3>Phần 1: Dịch Câu Từ Tiếng Việt Sang Tiếng Anh (20 câu)</h3><p class="sub-prompt">Dịch câu tiếng Việt gợi ý sang tiếng Anh. Hệ thống sẽ phân tích ngữ pháp, trật tự từ và chính tả.</p></div>`;
+    html += `<div class="card"><h3>Phần 1: Dịch Câu Từ Tiếng Việt Sang Tiếng Anh (20 câu)</h3><p class="sub-prompt">Dịch câu tiếng Việt gợi ý sang tiếng Anh. Bạn có thể nhấn <strong>"Kiểm tra câu này"</strong> để xem chấm điểm ngay lập tức.</p></div>`;
     part1Data.forEach((item, idx) => {
       html += `
         <div class="question-card" id="p1_card_${idx}">
           <div class="q-header">
             <span class="q-number">Câu ${idx + 1}/20</span>
-            <button class="btn-speaker" onclick="speak('${item.example.replace(/'/g, "\\'")}')">🔊 Nghe câu chuẩn</button>
+            <button class="btn-speaker" onclick="speak('${item.example.replace(/'/g, "\\'")}')">🔊 Nghe câu chuẩn (0.8x)</button>
           </div>
           <div class="prompt-text">🇻🇳 ${item.trans}</div>
           <div class="sub-prompt">Gợi ý từ cốt lõi: <strong>${item.word}</strong> (${item.meaning})</div>
           <input type="text" class="input-answer" placeholder="Gõ câu dịch tiếng Anh của bạn tại đây..." 
                  value="${item.userAnswer}" onchange="part1Data[${idx}].userAnswer = this.value">
+          <div class="q-action-row">
+            <button class="btn btn-check-item" onclick="checkSingleQuestion(1, ${idx})">🔍 Kiểm tra câu này</button>
+          </div>
           <div class="feedback" id="p1_fb_${idx}"></div>
         </div>
       `;
@@ -555,12 +572,15 @@ function renderTab() {
         <div class="question-card" id="p2_card_${idx}">
           <div class="q-header">
             <span class="q-number">Câu ${idx + 1}/20</span>
-            <button class="btn-speaker" onclick="speak('${item.word}')">🔊 Nghe phát âm</button>
+            <button class="btn-speaker" onclick="speak('${item.word}')">🔊 Nghe phát âm (0.8x)</button>
           </div>
           <div class="prompt-text">🇬🇧 ${item.blankSentence}</div>
           <div class="sub-prompt">Nghĩa tiếng Việt gợi ý: <strong>${item.meaning}</strong></div>
           <input type="text" class="input-answer" placeholder="Gõ từ vựng cần điền..." 
                  value="${item.userAnswer}" onchange="part2Data[${idx}].userAnswer = this.value">
+          <div class="q-action-row">
+            <button class="btn btn-check-item" onclick="checkSingleQuestion(2, ${idx})">🔍 Kiểm tra câu này</button>
+          </div>
           <div class="feedback" id="p2_fb_${idx}"></div>
         </div>
       `;
@@ -572,7 +592,7 @@ function renderTab() {
         <div class="question-card" id="p3_card_${idx}">
           <div class="q-header">
             <span class="q-number">Câu ${idx + 1}/20</span>
-            <button class="btn-speaker" onclick="speak('${item.example.replace(/'/g, "\\'")}')">🔊 Nghe câu gốc</button>
+            <button class="btn-speaker" onclick="speak('${item.example.replace(/'/g, "\\'")}')">🔊 Nghe câu gốc (0.8x)</button>
           </div>
           <div class="prompt-text">🇬🇧 ${item.maskedSentence}</div>
           <div class="sub-prompt">Dịch nghĩa: ${item.trans}</div>
@@ -583,6 +603,9 @@ function renderTab() {
                 <span>${opt}</span>
               </label>
             `).join('')}
+          </div>
+          <div class="q-action-row">
+            <button class="btn btn-check-item" onclick="checkSingleQuestion(3, ${idx})">🔍 Kiểm tra câu này</button>
           </div>
           <div class="feedback" id="p3_fb_${idx}"></div>
         </div>
@@ -596,7 +619,7 @@ function renderTab() {
         <div class="card" style="border-left: 4px solid var(--accent); margin-bottom: 20px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
             <strong style="color: var(--accent); font-size: 15px;">Đoạn văn ${group.passageId}</strong>
-            <button class="btn-speaker" onclick="speak('${group.passage.replace(/'/g, "\\'")}')">🔊 Nghe toàn bộ đoạn văn</button>
+            <button class="btn-speaker" onclick="speak('${group.passage.replace(/'/g, "\\'")}')">🔊 Nghe đoạn văn (0.8x)</button>
           </div>
           <div class="passage-box">${group.passage}</div>
           
@@ -606,7 +629,7 @@ function renderTab() {
               <div class="question-card" style="background:#fcfdfd; margin-top:12px;" id="p4_card_${pIdx}_${qLocalIdx}">
                 <div class="q-header">
                   <span class="q-number">Câu ${globalQIndex}/20</span>
-                  <button class="btn-speaker" onclick="speak('${q.targetWord}')">🔊 Nghe từ "${q.targetWord}"</button>
+                  <button class="btn-speaker" onclick="speak('${q.targetWord}')">🔊 Nghe từ "${q.targetWord}" (0.8x)</button>
                 </div>
                 <div class="prompt-text">${q.prompt}</div>
                 <div class="options-grid">
@@ -616,6 +639,9 @@ function renderTab() {
                       <span>${opt}</span>
                     </label>
                   `).join('')}
+                </div>
+                <div class="q-action-row">
+                  <button class="btn btn-check-item" onclick="checkSingleReadingQuestion(${pIdx}, ${qLocalIdx})">🔍 Kiểm tra câu này</button>
                 </div>
                 <div class="feedback" id="p4_fb_${pIdx}_${qLocalIdx}"></div>
               </div>
@@ -653,7 +679,6 @@ function analyzeTranslation(userText, targetText, coreWord) {
   const uWords = cleanU.split(/\s+/);
   const tWords = cleanT.split(/\s+/);
   
-  // 1. Kiểm tra từ cốt lõi
   const coreRegex = new RegExp(`\\b${coreWord.toLowerCase()}\\b`);
   if (!coreRegex.test(cleanU)) {
     return { 
@@ -662,7 +687,6 @@ function analyzeTranslation(userText, targetText, coreWord) {
     };
   }
 
-  // 2. Kiểm tra sai trật tự từ
   for (let i = 0; i < tWords.length - 1; i++) {
     const pair = `${tWords[i]} ${tWords[i+1]}`;
     const reversedPair = `${tWords[i+1]} ${tWords[i]}`;
@@ -674,7 +698,6 @@ function analyzeTranslation(userText, targetText, coreWord) {
     }
   }
 
-  // 3. Đo độ tương đồng
   let matchCount = 0;
   uWords.forEach(w => {
     if (tWords.includes(w)) matchCount++;
@@ -695,6 +718,84 @@ function analyzeTranslation(userText, targetText, coreWord) {
   }
 }
 
+// CHẤM TỪNG CÂU CHO PHẦN 1, 2, 3
+function checkSingleQuestion(part, idx) {
+  if (part === 1) {
+    const item = part1Data[idx];
+    const inputEl = document.querySelector(`#p1_card_${idx} .input-answer`);
+    if (inputEl) item.userAnswer = inputEl.value;
+
+    const fb = document.getElementById(`p1_fb_${idx}`);
+    if (!fb) return;
+    const result = analyzeTranslation(item.userAnswer || '', item.example, item.word);
+    fb.style.display = 'block';
+    if (result.isCorrect) {
+      fb.className = 'feedback correct';
+      fb.innerHTML = `<strong>✅ Chính xác!</strong><br>${result.comment}<br>📌 Câu mẫu: <i>${item.example}</i>`;
+    } else {
+      fb.className = 'feedback wrong';
+      fb.innerHTML = `<strong>❌ Chưa chính xác:</strong><br>💡 <strong>Góp ý:</strong> ${result.comment}<br>📌 <strong>Câu chuẩn xác:</strong> <strong>${item.example}</strong>`;
+    }
+  } else if (part === 2) {
+    const item = part2Data[idx];
+    const inputEl = document.querySelector(`#p2_card_${idx} .input-answer`);
+    if (inputEl) item.userAnswer = inputEl.value;
+
+    const fb = document.getElementById(`p2_fb_${idx}`);
+    if (!fb) return;
+    const cleanUser = (item.userAnswer || '').trim().toLowerCase();
+    const cleanTarget = item.word.trim().toLowerCase();
+    fb.style.display = 'block';
+    if (cleanUser === cleanTarget) {
+      fb.className = 'feedback correct';
+      fb.innerHTML = `<strong>✅ Chính xác!</strong> Từ cần điền là: <strong>${item.word}</strong>`;
+    } else {
+      fb.className = 'feedback wrong';
+      fb.innerHTML = `<strong>❌ Sai rồi!</strong> Từ chính xác: <strong>${item.word}</strong> (bạn đã nhập: "${item.userAnswer || '(trống)'}")`;
+    }
+  } else if (part === 3) {
+    const item = part3Data[idx];
+    const fb = document.getElementById(`p3_fb_${idx}`);
+    if (!fb) return;
+    if (!item.selectedAnswer) {
+      fb.style.display = 'block';
+      fb.className = 'feedback wrong';
+      fb.innerHTML = `⚠️ Vui lòng chọn một đáp án trước khi kiểm tra!`;
+      return;
+    }
+    fb.style.display = 'block';
+    if (item.selectedAnswer === item.word) {
+      fb.className = 'feedback correct';
+      fb.innerHTML = `<strong>✅ Chính xác!</strong> Đáp án: <strong>${item.word}</strong>`;
+    } else {
+      fb.className = 'feedback wrong';
+      fb.innerHTML = `<strong>❌ Sai rồi!</strong> Đáp án đúng là: <strong>${item.word}</strong>`;
+    }
+  }
+}
+
+// CHẤM TỪNG CÂU CHO PHẦN 4 ĐỌC HIỂU
+function checkSingleReadingQuestion(pIdx, qIdx) {
+  const q = part4Data[pIdx].questions[qIdx];
+  const fb = document.getElementById(`p4_fb_${pIdx}_${qIdx}`);
+  if (!fb) return;
+  if (!q.selectedAnswer) {
+    fb.style.display = 'block';
+    fb.className = 'feedback wrong';
+    fb.innerHTML = `⚠️ Vui lòng chọn một đáp án trước khi kiểm tra!`;
+    return;
+  }
+  fb.style.display = 'block';
+  if (q.selectedAnswer === q.correctMeaning) {
+    fb.className = 'feedback correct';
+    fb.innerHTML = `<strong>✅ Chính xác!</strong> "${q.targetWord}" nghĩa là: <strong>${q.correctMeaning}</strong>`;
+  } else {
+    fb.className = 'feedback wrong';
+    fb.innerHTML = `<strong>❌ Chưa đúng!</strong> Đáp án chính xác là: <strong>${q.correctMeaning}</strong>`;
+  }
+}
+
+// CHẤM TẤT CẢ VÀ TÍNH ĐIỂM TỔNG KẾT
 function checkAllAnswers() {
   let totalCorrect = 0;
   let totalQuestions = 0;
@@ -702,6 +803,9 @@ function checkAllAnswers() {
   if (currentTab === 'part1') {
     totalQuestions = part1Data.length;
     part1Data.forEach((item, idx) => {
+      const inputEl = document.querySelector(`#p1_card_${idx} .input-answer`);
+      if (inputEl) item.userAnswer = inputEl.value;
+
       const fb = document.getElementById(`p1_fb_${idx}`);
       if (!fb) return;
 
@@ -720,6 +824,9 @@ function checkAllAnswers() {
   } else if (currentTab === 'part2') {
     totalQuestions = part2Data.length;
     part2Data.forEach((item, idx) => {
+      const inputEl = document.querySelector(`#p2_card_${idx} .input-answer`);
+      if (inputEl) item.userAnswer = inputEl.value;
+
       const fb = document.getElementById(`p2_fb_${idx}`);
       if (!fb) return;
       const cleanUser = (item.userAnswer || '').trim().toLowerCase();
